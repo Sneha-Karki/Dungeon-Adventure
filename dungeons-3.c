@@ -2,7 +2,7 @@
 -Name: Sneha Karki
 -Fall 2024, CS2713 <003>
 -dwx106
--Project 2 Part 3: Sauron-sama's Dungeon- Explore the Dungeon
+-Project 2 Part 3: Sauron-sama's Dungeon - Explore the Dungeon
 ******************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,18 +15,21 @@
 #define WEAPON_CHAR 'W'
 #define PLAYER_CHAR '@'
 
+// Structure to define a Monster with attributes name, health, and damage
 typedef struct {
     char name[20];
     int health;
     int damage;
 } Monster;
 
+// Structure to define a Weapon with attributes name, damage, and durability
 typedef struct {
     char name[20];
     int damage;
     int durability;
 } Weapon;
 
+// Structure to define the Dungeon containing a grid, arrays of monsters and weapons, and their counts
 typedef struct {
     char grid[GRID_SIZE][GRID_SIZE];
     Monster *monsters;
@@ -35,13 +38,14 @@ typedef struct {
     int weapon_count;
 } Dungeon;
 
+// Structure to define the Player with health, position coordinates, and a count of monsters defeated
 typedef struct {
     int health;
     int pos_x, pos_y;
     int monsters_defeated;
 } Player;
 
-// Load monsters from monsters.txt
+// Function to load monster data from a file and initialize monsters in the dungeon
 void loadMonstersFromFile(Dungeon *dungeon, int monsterCount) {
     FILE *file = fopen("monsters.txt", "r");
     if (!file) {
@@ -51,15 +55,15 @@ void loadMonstersFromFile(Dungeon *dungeon, int monsterCount) {
     dungeon->monsters = malloc(monsterCount * sizeof(Monster));
     char line[20];
     for (int i = 0; i < monsterCount && fgets(line, sizeof(line), file); i++) {
-        strtok(line, "\n");
+        strtok(line, "\n"); // Remove newline character
         strcpy(dungeon->monsters[i].name, line);
-        dungeon->monsters[i].health = rand() % 30 + 20;
-        dungeon->monsters[i].damage = rand() % 10 + 5;
+        dungeon->monsters[i].health = rand() % 30 + 20; // Random health between 20 and 49
+        dungeon->monsters[i].damage = rand() % 10 + 5;  // Random damage between 5 and 14
     }
     fclose(file);
 }
 
-// Load weapons from weapons.txt
+// Function to load weapon data from a file and initialize weapons in the dungeon
 void loadWeaponsFromFile(Dungeon *dungeon, int weaponCount) {
     FILE *file = fopen("weapons.txt", "r");
     if (!file) {
@@ -69,15 +73,15 @@ void loadWeaponsFromFile(Dungeon *dungeon, int weaponCount) {
     dungeon->weapons = malloc(weaponCount * sizeof(Weapon));
     char line[20];
     for (int i = 0; i < weaponCount && fgets(line, sizeof(line), file); i++) {
-        strtok(line, "\n");
+        strtok(line, "\n"); // Remove newline character
         strcpy(dungeon->weapons[i].name, line);
-        dungeon->weapons[i].damage = rand() % 10 + 5;
-        dungeon->weapons[i].durability = rand() % 10 + 10;
+        dungeon->weapons[i].damage = rand() % 10 + 5;  // Random damage between 5 and 14
+        dungeon->weapons[i].durability = rand() % 10 + 10; // Random durability between 10 and 19
     }
     fclose(file);
 }
 
-// Initialize dungeon with M, W, and empty rooms
+// Function to initialize the dungeon grid with monsters, weapons, and empty rooms
 void initializeDungeon(Dungeon *dungeon) {
     dungeon->monster_count = 0;
     dungeon->weapon_count = 0;
@@ -86,19 +90,19 @@ void initializeDungeon(Dungeon *dungeon) {
         for (int j = 0; j < GRID_SIZE; j++) {
             int randVal = rand() % 10;
             if (randVal < 2) {
-                dungeon->grid[i][j] = MONSTER_CHAR;
+                dungeon->grid[i][j] = MONSTER_CHAR; // Place monster
                 dungeon->monster_count++;
             } else if (randVal < 4) {
-                dungeon->grid[i][j] = WEAPON_CHAR;
+                dungeon->grid[i][j] = WEAPON_CHAR; // Place weapon
                 dungeon->weapon_count++;
             } else {
-                dungeon->grid[i][j] = ROOM_CHAR;
+                dungeon->grid[i][j] = ROOM_CHAR; // Empty room
             }
         }
     }
 }
 
-// Print dungeon grid
+// Function to print the dungeon layout
 void printDungeon(Dungeon *dungeon) {
     printf("\nDungeon Layout:\n");
     for (int i = 0; i < GRID_SIZE; i++) {
@@ -109,21 +113,21 @@ void printDungeon(Dungeon *dungeon) {
     }
 }
 
-// Place player in a random room
+// Function to place the player in a random empty room in the dungeon
 void placePlayerInDungeon(Dungeon *dungeon, Player *player) {
     while (1) {
         int x = rand() % GRID_SIZE;
         int y = rand() % GRID_SIZE;
-        if (dungeon->grid[x][y] == ROOM_CHAR) {
+        if (dungeon->grid[x][y] == ROOM_CHAR) { // Ensure it's an empty room
             player->pos_x = x;
             player->pos_y = y;
-            dungeon->grid[player->pos_x][player->pos_y] = PLAYER_CHAR;
+            dungeon->grid[player->pos_x][player->pos_y] = PLAYER_CHAR; // Place player
             break;
         }
     }
 }
 
-// Describe monsters and weapons
+// Function to describe all monsters and weapons present in the dungeon
 void describeMonstersAndWeapons(Dungeon *dungeon) {
     printf("\nMonsters in the Dungeon:\n");
     for (int i = 0; i < dungeon->monster_count; i++) {
@@ -135,85 +139,86 @@ void describeMonstersAndWeapons(Dungeon *dungeon) {
     }
 }
 
-// Monster attack function
+// Function to handle monster attacks on the player
 void monstersAttackPlayer(Dungeon *dungeon, Player *player) {
     for (int i = 0; i < dungeon->monster_count; i++) {
-        if (dungeon->monsters[i].health > 0) {
-            player->health -= dungeon->monsters[i].damage;
+        if (dungeon->monsters[i].health > 0) { // If monster is alive
+            player->health -= dungeon->monsters[i].damage; // Reduce player's health
             printf("%s attacked! Player health: %d\n", dungeon->monsters[i].name, player->health);
         }
     }
 }
 
-// Move player in specified direction
+// Function to move the player in the specified direction (N, S, E, W)
 void movePlayer(Dungeon *dungeon, Player *player, char direction) {
     int new_x = player->pos_x;
     int new_y = player->pos_y;
     switch (direction) {
-        case 'N': new_x--; break;
-        case 'S': new_x++; break;
-        case 'E': new_y++; break;
-        case 'W': new_y--; break;
+        case 'N': new_x--; break; // Move North
+        case 'S': new_x++; break; // Move South
+        case 'E': new_y++; break; // Move East
+        case 'W': new_y--; break; // Move West
         default: printf("Invalid move!\n"); return;
     }
     if (new_x >= 0 && new_x < GRID_SIZE && new_y >= 0 && new_y < GRID_SIZE) {
-        dungeon->grid[player->pos_x][player->pos_y] = ROOM_CHAR;
+        dungeon->grid[player->pos_x][player->pos_y] = ROOM_CHAR; // Clear old position
         player->pos_x = new_x;
         player->pos_y = new_y;
-        dungeon->grid[player->pos_x][player->pos_y] = PLAYER_CHAR;
+        dungeon->grid[player->pos_x][player->pos_y] = PLAYER_CHAR; // Set new position
         printf("Player moved to (%d, %d).\n", player->pos_x, player->pos_y);
     } else {
-        printf("Move failed: out of bounds.\n");
+        printf("Move failed: out of bounds.\n"); // Handle out-of-bounds movement
     }
-    printDungeon(dungeon);
-    monstersAttackPlayer(dungeon, player);
+    printDungeon(dungeon); // Show updated dungeon layout
+    monstersAttackPlayer(dungeon, player); // Trigger monster attacks after player moves
 }
 
-// Allow the player to escape if they return to the starting point
+// Function to check if the player can escape the dungeon from the starting point
 void checkForEscape(Player *player) {
-    if (player->pos_x == 0 && player->pos_y == 0) {
+    if (player->pos_x == 0 && player->pos_y == 0) { // Check if player is at the starting point
         char action[10];
         printf("You have returned to the starting point. Type 'escape' to leave the dungeon: ");
         scanf("%s", action);
         if (strcmp(action, "escape") == 0) {
             printf("You escaped the dungeon!\n");
-            printf("Monsters defeated: %d\n", player->monsters_defeated);
-            exit(0);
+            printf("Monsters defeated: %d\n", player->monsters_defeated); // Display monsters defeated
+            exit(0); // End the game
         }
     }
 }
 
+// Main function to run the dungeon exploration game
 int main() {
-    srand(time(0));
+    srand(time(0)); // Seed the random number generator
     Dungeon dungeon;
-    Player player = { .health = 100, .monsters_defeated = 0 };
+    Player player = { .health = 100, .monsters_defeated = 0 }; // Initialize player attributes
 
-    initializeDungeon(&dungeon);
-    loadMonstersFromFile(&dungeon, dungeon.monster_count);
-    loadWeaponsFromFile(&dungeon, dungeon.weapon_count);
-    printDungeon(&dungeon);
+    initializeDungeon(&dungeon); // Set up the dungeon layout
+    loadMonstersFromFile(&dungeon, dungeon.monster_count); // Load monsters into dungeon
+    loadWeaponsFromFile(&dungeon, dungeon.weapon_count); // Load weapons into dungeon
+    printDungeon(&dungeon); // Display the initial dungeon layout
 
-    placePlayerInDungeon(&dungeon, &player);
-    describeMonstersAndWeapons(&dungeon);
+    placePlayerInDungeon(&dungeon, &player); // Place player in the dungeon
+    describeMonstersAndWeapons(&dungeon); // Describe the monsters and weapons present
 
     char action[10];
-    while (player.health > 0) {
+    while (player.health > 0) { // Game loop continues while the player is alive
         printf("\nEnter action (N/S/E/W to move, 'escape' to leave dungeon): ");
         scanf("%s", action);
 
         if (strcmp(action, "escape") == 0) {
-            checkForEscape(&player);
+            checkForEscape(&player); // Check if the player can escape the dungeon
         }
 
         if (strlen(action) == 1) {
-            movePlayer(&dungeon, &player, action[0]);
+            movePlayer(&dungeon, &player, action[0]); // Move player based on input
         } else {
-            printf("Invalid command.\n");
+            printf("Invalid command.\n"); // Handle invalid commands
         }
     }
 
-    printf("Game Over!\n");
-    free(dungeon.monsters);
-    free(dungeon.weapons);
-    return 0;
+    printf("Game Over!\n"); // End the game when player health reaches zero
+    free(dungeon.monsters); // Free allocated memory for monsters
+    free(dungeon.weapons); // Free allocated memory for weapons
+    return 0; // Exit the program
 }
